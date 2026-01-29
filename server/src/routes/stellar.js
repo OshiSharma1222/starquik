@@ -25,6 +25,37 @@ router.get('/account/:publicKey', async (req, res) => {
   }
 });
 
+// Get account transaction history
+router.get('/account/:publicKey/transactions', async (req, res) => {
+  try {
+    const { publicKey } = req.params;
+    const { limit = 30, cursor } = req.query;
+    const limitNum = Math.min(Math.max(1, Number(limit) || 30), 100);
+    let txCall = server.transactions().forAccount(publicKey).limit(limitNum).order('desc');
+    if (cursor) txCall = txCall.cursor(cursor);
+    const result = await txCall.call();
+    const records = result.records || [];
+    const transactions = records.map((tx) => ({
+      id: tx.id,
+      hash: tx.hash,
+      created_at: tx.created_at,
+      successful: tx.successful,
+      fee_charged: tx.fee_charged,
+      operation_count: tx.operation_count,
+      source_account: tx.source_account,
+      paging_token: tx.paging_token,
+    }));
+    const hasMore = records.length === limitNum && records.length > 0;
+    const nextCursor = hasMore ? records[records.length - 1].paging_token : null;
+    res.json({
+      transactions,
+      next_cursor: nextCursor,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Get liquidity pools
 router.get('/pools', async (req, res) => {
   try {
@@ -221,10 +252,20 @@ router.post('/build/swap', async (req, res) => {
     const dest = getAsset(destAsset);
     
     // Find path
-    const paths = await server.strictSendPaths(source, amount.toString(), [dest]).call();
+    let paths;
+    try {
+      paths = await server.strictSendPaths(source, amount.toString(), [dest]).call();
+    } catch (pathError) {
+      console.error('Path finding error:', pathError);
+      return res.status(400).json({ 
+        error: `Failed to find swap path: ${pathError.message}. This may be because there is no liquidity pool available for ${sourceAsset.code} to ${destAsset.code}.` 
+      });
+    }
     
     if (!paths.records || paths.records.length === 0) {
-      return res.status(400).json({ error: 'No swap path found' });
+      return res.status(400).json({ 
+        error: `No swap path found from ${sourceAsset.code} to ${destAsset.code}. There may not be enough liquidity or no liquidity pool exists for this pair.` 
+      });
     }
     
     const bestPath = paths.records[0];
@@ -288,7 +329,21 @@ router.get('/quote', async (req, res) => {
     const source = getAsset(sourceCode, sourceIssuer);
     const dest = getAsset(destCode, destIssuer);
     
-    const paths = await server.strictSendPaths(source, amount, [dest]).call();
+    let paths;
+    try {
+      paths = await server.strictSendPaths(source, amount, [dest]).call();
+    } catch (pathError) {
+      console.error('Quote path finding error:', pathError);
+      return res.status(400).json({ 
+        error: `Failed to find swap path: ${pathError.message}. This may be because there is no liquidity pool available for ${sourceCode} to ${destCode}.` 
+      });
+    }
+    
+    if (!paths.records || paths.records.length === 0) {
+      return res.status(400).json({ 
+        error: `No swap path found from ${sourceCode} to ${destCode}. There may not be enough liquidity or no liquidity pool exists for this pair.` 
+      });
+    }
     
     res.json(paths.records.map(p => ({
       destination_amount: p.destination_amount,
@@ -296,6 +351,7 @@ router.get('/quote', async (req, res) => {
       source_amount: p.source_amount,
     })));
   } catch (error) {
+    console.error('Quote error:', error);
     res.status(400).json({ error: error.message });
   }
 });

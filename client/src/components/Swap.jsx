@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { buildSwap, submitTransaction, getSwapQuote } from '../services/api';
+import { buildSwap, getSwapQuote, submitTransaction } from '../services/api';
 import { signTransaction } from '../services/wallet';
 
 const COMMON_ASSETS = [
@@ -16,6 +16,7 @@ function Swap({ wallet, account, onRefresh }) {
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState(null);
   const [slippage, setSlippage] = useState(1);
 
   useEffect(() => {
@@ -24,6 +25,7 @@ function Swap({ wallet, account, onRefresh }) {
         fetchQuote();
       } else {
         setQuote(null);
+        setQuoteError(null);
       }
     }, 500);
 
@@ -32,6 +34,7 @@ function Swap({ wallet, account, onRefresh }) {
 
   const fetchQuote = async () => {
     setQuoteLoading(true);
+    setQuoteError(null);
     try {
       const quotes = await getSwapQuote(
         sourceAsset.code,
@@ -42,12 +45,18 @@ function Swap({ wallet, account, onRefresh }) {
       );
       if (quotes && quotes.length > 0) {
         setQuote(quotes[0]);
+        setQuoteError(null);
       } else {
         setQuote(null);
+        setQuoteError('No swap path found. There may not be enough liquidity for this pair.');
       }
     } catch (error) {
       console.error('Quote error:', error);
       setQuote(null);
+      const errorMessage = error.message || 'Failed to get quote';
+      setQuoteError(errorMessage.includes('No swap path') || errorMessage.includes('No path') 
+        ? 'No swap path found. There may not be enough liquidity for this pair.'
+        : errorMessage);
     } finally {
       setQuoteLoading(false);
     }
@@ -220,12 +229,16 @@ function Swap({ wallet, account, onRefresh }) {
           </div>
         </div>
 
-        {(quote || quoteLoading) && (
+        {(quote || quoteLoading || quoteError) && (
           <div className="quote-display">
             {quoteLoading ? (
               <div className="flex items-center justify-between">
                 <span className="text-muted">Fetching quote...</span>
                 <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />
+              </div>
+            ) : quoteError ? (
+              <div style={{ color: '#ef5350', padding: '0.5rem', textAlign: 'center' }}>
+                {quoteError}
               </div>
             ) : quote && (
               <>

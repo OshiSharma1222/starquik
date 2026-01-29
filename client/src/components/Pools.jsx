@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { getPools, getAccountPools, buildWithdraw, submitTransaction } from '../services/api';
+import { buildWithdraw, getAccountPools, getPools, submitTransaction } from '../services/api';
 import { signTransaction } from '../services/wallet';
 
 function Pools({ wallet, account, onRefresh }) {

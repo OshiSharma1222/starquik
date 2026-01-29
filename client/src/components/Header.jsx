@@ -38,6 +38,12 @@ function Header({ wallet, onConnect, onDisconnect, activeTab, setActiveTab, load
           >
             Add Liquidity
           </button>
+          <button
+            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            History
+          </button>
         </nav>
       )}
 

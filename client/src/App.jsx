@@ -1,13 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
-import Header from './components/Header';
+import AddLiquidity from './components/AddLiquidity';
 import ConnectPrompt from './components/ConnectPrompt';
 import Dashboard from './components/Dashboard';
-import Swap from './components/Swap';
+import Header from './components/Header';
 import Pools from './components/Pools';
-import AddLiquidity from './components/AddLiquidity';
-import { connectFreighter, isFreighterInstalled, getPublicKey } from './services/wallet';
+import Swap from './components/Swap';
+import TransactionHistory from './components/TransactionHistory';
 import { getAccount } from './services/api';
+import { connectFreighter, getPublicKey } from './services/wallet';
 
 function App() {
   const [wallet, setWallet] = useState(null);
@@ -26,12 +27,6 @@ function App() {
   }, []);
 
   const handleConnect = async () => {
-    if (!isFreighterInstalled()) {
-      toast.error('Please install Freighter wallet extension');
-      window.open('https://www.freighter.app/', '_blank');
-      return;
-    }
-
     setLoading(true);
     try {
       const publicKey = await connectFreighter();
@@ -56,16 +51,14 @@ function App() {
 
   useEffect(() => {
     const checkConnection = async () => {
-      if (isFreighterInstalled()) {
-        try {
-          const publicKey = await getPublicKey();
-          if (publicKey) {
-            setWallet({ publicKey });
-            await loadAccount(publicKey);
-          }
-        } catch (error) {
-          // Not connected
+      try {
+        const publicKey = await getPublicKey();
+        if (publicKey) {
+          setWallet({ publicKey });
+          await loadAccount(publicKey);
         }
+      } catch (error) {
+        // Not connected
       }
     };
     checkConnection();
@@ -91,6 +84,8 @@ function App() {
         return <Pools wallet={wallet} account={account} onRefresh={refreshAccount} />;
       case 'add-liquidity':
         return <AddLiquidity wallet={wallet} account={account} onRefresh={refreshAccount} />;
+      case 'history':
+        return <TransactionHistory wallet={wallet} onRefresh={refreshAccount} />;
       default:
         return <Dashboard account={account} wallet={wallet} onRefresh={refreshAccount} />;
     }

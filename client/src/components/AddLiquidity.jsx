@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { buildPoolTrustline, buildDeposit, submitTransaction, buildTrustline } from '../services/api';
+import { buildDeposit, buildPoolTrustline, buildTrustline, submitTransaction } from '../services/api';
 import { signTransaction } from '../services/wallet';
 
 const COMMON_ASSETS = [

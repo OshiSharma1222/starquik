@@ -1,44 +1,52 @@
 import {
-  isConnected,
-  isAllowed,
-  setAllowed,
   getAddress,
-  getNetwork as freighterGetNetwork,
+  isAllowed,
+  isConnected,
+  setAllowed,
   signTransaction as freighterSignTransaction,
+  getNetwork as freighterGetNetwork,
 } from '@stellar/freighter-api';
 
 export async function isFreighterInstalled() {
   try {
-    const connected = await isConnected();
-    return connected;
+    const result = await isConnected();
+    // v2.x returns { isConnected: boolean }
+    return result?.isConnected === true;
   } catch (e) {
+    console.log('Freighter check error:', e);
     return false;
   }
 }
 
 export async function connectFreighter() {
   try {
-    // Check connection
-    const connected = await isConnected();
-    if (!connected) {
-      throw new Error('Please open Freighter extension and unlock your wallet');
+    // Check if Freighter is installed and connected
+    const connResult = await isConnected();
+    console.log('isConnected result:', connResult);
+    
+    if (!connResult?.isConnected) {
+      throw new Error('Please install and open Freighter extension');
     }
 
     // Check if our app is allowed
-    const allowed = await isAllowed();
-    if (!allowed) {
+    const allowedResult = await isAllowed();
+    console.log('isAllowed result:', allowedResult);
+    
+    if (!allowedResult?.isAllowed) {
       // Request permission
-      await setAllowed();
+      const setAllowedResult = await setAllowed();
+      console.log('setAllowed result:', setAllowedResult);
     }
 
     // Get the public key
     const addressResult = await getAddress();
+    console.log('getAddress result:', addressResult);
     
-    if (addressResult.error) {
+    if (addressResult?.error) {
       throw new Error(addressResult.error);
     }
     
-    return addressResult.address;
+    return addressResult?.address;
   } catch (error) {
     console.error('Freighter connection error:', error);
     throw error;
@@ -47,18 +55,18 @@ export async function connectFreighter() {
 
 export async function getPublicKey() {
   try {
-    const connected = await isConnected();
-    if (!connected) {
+    const connResult = await isConnected();
+    if (!connResult?.isConnected) {
       return null;
     }
 
-    const allowed = await isAllowed();
-    if (!allowed) {
+    const allowedResult = await isAllowed();
+    if (!allowedResult?.isAllowed) {
       return null;
     }
 
     const addressResult = await getAddress();
-    return addressResult.address || null;
+    return addressResult?.address || null;
   } catch (error) {
     console.error('Error getting public key:', error);
     return null;
@@ -66,7 +74,8 @@ export async function getPublicKey() {
 }
 
 export async function signTransaction(xdr, network = 'TESTNET') {
-  if (!isFreighterInstalled()) {
+  const installed = await isFreighterInstalled();
+  if (!installed) {
     throw new Error('Freighter wallet is not installed');
   }
 
@@ -92,7 +101,8 @@ export async function signTransaction(xdr, network = 'TESTNET') {
 
 export async function getNetwork() {
   try {
-    if (!isFreighterInstalled()) {
+    const installed = await isFreighterInstalled();
+    if (!installed) {
       return null;
     }
 

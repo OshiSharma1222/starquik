@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { getAccountPools, fundTestnetAccount } from '../services/api';
+import { fundTestnetAccount, getAccountPools } from '../services/api';
 
 function Dashboard({ account, wallet, onRefresh }) {
   const [pools, setPools] = useState([]);

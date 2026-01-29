@@ -567,3 +567,77 @@ body {
 .justify-between { justify-content: space-between; }
 .gap-1 { gap: 0.5rem; }
 .gap-2 { gap: 1rem; }
+
+/* Transaction history */
+.tx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tx-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  text-decoration: none;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.tx-row:hover {
+  border-color: var(--accent-primary);
+  background: rgba(233, 69, 96, 0.05);
+}
+
+.tx-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 80px;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.tx-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.tx-status-dot.success {
+  background: var(--success);
+}
+
+.tx-status-dot.failed {
+  background: var(--error);
+}
+
+.tx-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  flex: 1;
+}
+
+.tx-date {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.tx-hash {
+  font-family: monospace;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.tx-link {
+  color: var(--accent-primary);
+  font-size: 1rem;
+}

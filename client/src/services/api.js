@@ -8,6 +8,16 @@ export async function getAccount(publicKey) {
   return response.json();
 }
 
+export async function getTransactions(publicKey, limit = 30, cursor = '') {
+  const params = new URLSearchParams({ limit: String(limit) });
+  if (cursor) params.append('cursor', cursor);
+  const response = await fetch(`${API_BASE}/account/${publicKey}/transactions?${params}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch transactions');
+  }
+  return response.json();
+}
+
 export async function getPools(reserves = '') {
   const url = reserves ? `${API_BASE}/pools?reserves=${reserves}` : `${API_BASE}/pools`;
   const response = await fetch(url);
